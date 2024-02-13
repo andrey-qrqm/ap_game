@@ -288,14 +288,17 @@ def is_wall(x, y):
 
 def is_bot(x, y):
     global bot
-    if x == bot.x and y == bot.y:
-        return True
+    if bot.x - 0.5 <= x <= bot.x + 0.5:
+        if bot.y - 0.5 <= y <= bot.y + 0.5:
+            return True
 
 
 def is_player(x, y):
     global player
-    if x == player.x and y == player.y:
-        return True
+    if player.x - 0.5 <= x <= player.x + 0.5:
+        if player.y - 0.5 <= y <= player.y + 0.5:
+            return True
+
 
 
 # function of prediction next step based on direction
@@ -357,8 +360,13 @@ def on_press(key):
 
 
 def on_release(key):
-    pass
-
+    if key == kb.Key.esc:
+        # Stop listener
+        player.exit_pressed = True
+        return False
+    if key.char == 'q' or key.char == 'й':
+        player.exit_pressed = True
+        return False
 
 # function of starting a game
 def start():
@@ -406,7 +414,7 @@ player = Player(xpos, ypos, 0, player_image, False)
 bot = Bot(1, 1, 0, bot_image, False)
 
 # create a walls object
-wall_show()
+#wall_show()
 
 # creating bullets
 bullet = Bullet(0, 0, bullet_image, 0)
