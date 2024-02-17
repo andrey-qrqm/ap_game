@@ -1,7 +1,7 @@
 import random
 
 def generate_level():
-    quantity_x = random.randint(3, 6)
+    quantity_x = 1
     ret_arr = []
     x_mem = 0
     for y in range(0, 10):
@@ -10,8 +10,10 @@ def generate_level():
             if x == x_mem:
                 break
             x_mem = x
-            ret_arr.append([x, y])
+            if [x, y] != [4, 4] and [x, y] != [1, 1]:
+                ret_arr.append([x, y])
     return ret_arr
     #print(ret_arr, print(len(ret_arr)))
+
 
 #print(generate_level())
