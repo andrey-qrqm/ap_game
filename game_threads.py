@@ -14,6 +14,7 @@ import threading
 import time
 import walls_generator
 import cv2
+import math
 import numpy as np
 from pynput import keyboard as kb
 
@@ -114,11 +115,63 @@ class Bot(Player):
             x_mem = self.x
             y_mem = self.y
             self.forward()
+
             if self.x == x_mem and self.y == y_mem:
                 self.rotate_d()
                 self.rotate_d()
                 self.bot_shoot()
-        pass
+            pass
+
+    def move_towards_target(self):
+        global player
+        while [self.x, self.y] != [player.x, player.y] or not exit_pressed:
+            # Calculate relative position
+            delta_x = self.x - player.x
+            delta_y = self.y - player.y
+            time.sleep(0.33)
+            # Rotate towards the target
+            self.rotate_towards_target(delta_x, delta_y)
+            # Move towards the target
+            x_mem = self.x
+            y_mem = self.y
+            self.forward()
+
+            if self.x == x_mem and self.y == y_mem:
+                self.rotate_d()
+                self.forward()
+                #self.bot_shoot()
+
+    def rotate_towards_target(self, delta_x, delta_y):
+        angle_to_target = self.calculate_angle(delta_x, delta_y)
+
+        while self.direction != angle_to_target:
+            # Rotate 90 degrees to the right or left
+            if self.direction < angle_to_target:
+                self.rotate_d()
+            else:
+                self.rotate_a()
+
+    # Function to calculate the angle of rotation
+    def calculate_angle(self, delta_x, delta_y):
+        # Calculate the angle (in degrees) from (1, 0) to (delta_x, delta_y)
+        angle = math.degrees(math.atan2(delta_y, delta_x))
+        print("ANGLE - ", angle)
+        # Ensure the angle is between 0 and 360
+        if angle < 0:
+            angle += 360
+        print("ANGLE - ", angle)
+        if 0 <= angle < 90:
+            angle = 0
+        elif 90 <= angle < 180:
+            angle = 90
+        elif 180 <= angle < 270:
+            angle = 180
+        elif 270 <= angle <= 359:
+            angle = 270
+        print("ANGLE - ", angle)
+        return angle
+
+
 
 
     def bot_shoot(self):
@@ -220,17 +273,7 @@ class Bullet:
             else:
                 collide = True
         return collide
-"""
-    def on_collide(self):
-        global player, bot
-        if self.x == player.x and self.y == player.y:
-            print("++++BOT SHOT PLAYER++++")
 
-        elif self.x == bot.x and self.y == bot.y:
-            print("++++PLAYER SHOT BOT++++")
-        else:
-            pass
-"""
 
 # one frame drawing
 def screen_renew(background, player, bot):
@@ -263,10 +306,16 @@ def draw_player(background, player, bullet, bot):
         frame[ypos: ypos + TILE_SIZE, xpos: xpos + TILE_SIZE] = wall.image
     if bullet_moving:
         xpos, ypos = int(bullet.x * TILE_SIZE), int(bullet.y * TILE_SIZE)
-        frame[ypos: ypos + TILE_SIZE, xpos: xpos + TILE_SIZE] = bullet.image
+        try:
+            frame[ypos: ypos + TILE_SIZE, xpos: xpos + TILE_SIZE] = bullet.image
+        except ValueError:
+            raise MyException
     if bot_bullet_moving:
         xpos, ypos = int(bot_bullet.x * TILE_SIZE), int(bot_bullet.y * TILE_SIZE)
-        frame[ypos: ypos + TILE_SIZE, xpos: xpos + TILE_SIZE] = bullet_image
+        try:
+            frame[ypos: ypos + TILE_SIZE, xpos: xpos + TILE_SIZE] = bullet_image
+        except ValueError:
+            raise MyException
     cv2.imshow("frame", frame)
     cv2.waitKey(10)
 
@@ -371,7 +420,7 @@ def on_release(key):
 # function of starting a game
 def start():
     thread_screen = threading.Thread(target=screen_renew, args=(background, player, bot), daemon=True)
-    thread_bot = threading.Thread(target=bot.bot_move, daemon=True)
+    thread_bot = threading.Thread(target=bot.move_towards_target, daemon=True)
     thread_bot.start()
     thread_screen.start()
     with kb.Listener(
@@ -414,7 +463,7 @@ player = Player(xpos, ypos, 0, player_image, False)
 bot = Bot(1, 1, 0, bot_image, False)
 
 # create a walls object
-#wall_show()
+wall_show()
 
 # creating bullets
 bullet = Bullet(0, 0, bullet_image, 0)
