@@ -18,9 +18,9 @@ import math
 import numpy as np
 from pynput import keyboard as kb
 
-i = 0
 bullet_lock = threading.Lock()
 bot_bullet_lock = threading.Lock()
+
 
 class MyException(Exception): pass
 
@@ -35,6 +35,7 @@ class Player:
         self.image = image
         self.exit_pressed = exit_pressed
 
+    # player move forward
     def forward(self):
         global bot, player
         if self.direction == 0 and self.y > 0:
@@ -52,6 +53,7 @@ class Player:
         print("position - ", self.x, self.y)
         return self
 
+    # player move backward
     def backward(self):
         if self.direction == 0 and self.y < 9 and not is_wall(self.x, self.y + 1):
             self.y += 1
@@ -64,9 +66,9 @@ class Player:
         elif self.direction == 270 and self.x < 9:
             if not is_wall(self.x + 1, self.y):
                 self.x += 1
-        #print("position - ", self.x, self.y)
         return self
 
+    # player rotate anti-clockwise
     def rotate_a(self):
         self.image = cv2.rotate(self.image, cv2.ROTATE_90_COUNTERCLOCKWISE)
         self.direction -= 90
@@ -74,17 +76,15 @@ class Player:
         print(self.direction)
         return self
 
+    # player rotate clockwise
     def rotate_d(self):
         self.image = cv2.rotate(self.image, cv2.ROTATE_90_CLOCKWISE)
         self.direction += 90
         if self.direction > 270: self.direction -= 360
         print(self.direction)
-        # print("d was pressed")
         return self
 
-    # move - reading the keyboard and changing the x and y of the player
-    # return - player
-    # function to detect how to move forward based on direction
+    # def to launch a bullet from player, starting own bullet thread
     def shoot(self):
         global bullet_moving, bullet
         with bullet_lock:
@@ -92,13 +92,14 @@ class Player:
                 bullet_moving = True
                 pos_x, pos_y = step_direction(self)
                 # bullet.direction = self.direction
-                bullet = Bullet(pos_x, pos_y, bullet_image, self.direction)
+                if not is_wall(pos_x, pos_y):
+                    bullet = Bullet(pos_x, pos_y, bullet_image, self.direction)
                 threading.Thread(target=self._move_bullet, args=(bullet,), daemon=True).start()
 
+    # to make bullet moving, checking if collide
     def _move_bullet(self, bullet):
         global bullet_moving
         while bullet_moving and not self.exit_pressed:
-            #bullet.move()
             time.sleep(1 / 30)
             with bullet_lock:
                 if bullet.move():
@@ -109,6 +110,8 @@ class Player:
 
 
 class Bot(Player):
+    # describing how bot is moving
+    # spiral movement towards player
     def bot_move(self):
         while not exit_pressed:
             time.sleep(1)
@@ -126,6 +129,7 @@ class Bot(Player):
         global player
         while [self.x, self.y] != [player.x, player.y] or not exit_pressed:
             # Calculate relative position
+            # delta - distance between bot and player
             delta_x = self.x - player.x
             delta_y = self.y - player.y
             time.sleep(0.33)
@@ -135,11 +139,10 @@ class Bot(Player):
             x_mem = self.x
             y_mem = self.y
             self.forward()
-
+            # if bot is stuck, it will try to rotate and move
             if self.x == x_mem and self.y == y_mem:
                 self.rotate_d()
                 self.forward()
-                #self.bot_shoot()
 
     def rotate_towards_target(self, delta_x, delta_y):
         angle_to_target = self.calculate_angle(delta_x, delta_y)
@@ -173,19 +176,18 @@ class Bot(Player):
 
 
 
-
+    #set bot_bullet as moving object
     def bot_shoot(self):
         global bot_bullet_moving, bot_bullet
         print("BOT IS SHOOTING")
         with bot_bullet_lock:
             if not bot_bullet_moving:
                 bot_bullet_moving = True
-                # bullet.direction = self.direction
                 bot_bullet = Bullet(self.x, self.y, bullet_image, self.direction)
                 print("start position of bot bullet is - ", bot_bullet.x, bot_bullet.y, bot_bullet.direction)
                 threading.Thread(target=self._bot_move_bullet, args=(bot_bullet,), daemon=True).start()
 
-
+    # to move bot_bullet, checking if collide
     def _bot_move_bullet(self, bot_bullet):
         global bot_bullet_moving
         while bot_bullet_moving and not self.exit_pressed:
@@ -194,11 +196,9 @@ class Bot(Player):
             with bot_bullet_lock:
                 if bot_bullet.move():
                     bot_bullet_moving = False
-
                     print("COLLIDE!!!!")
                     break
         bot_bullet_moving = False
-
 
 
 class Wall:
@@ -215,7 +215,6 @@ class Bullet:
     def __init__(self, x, y, image, direction, speed=0.25):
         self.x = x
         self.y = y
-        # self.speed = speed
         self.image = image
         self.direction = direction
         self.speed = speed
@@ -224,58 +223,78 @@ class Bullet:
     def move(self):
         collide = False
         if self.direction == 0:
-            if not is_wall(self.x, self.y - 1) and self.y > 0:
-                if is_bot(self.x, self.y - 1):
-                    collide = True
-                    print("bullet ", self.x, self.y - 1, 'killed bot on', bot.x, bot.y)
-                if is_player(self.x, self.y - 1):
-                    collide = True
-                    print("bullet ", self.x, self.y, 'killed player on', player.x, player.y)
-                self.y -= self.speed
-                time.sleep(1 / 30)
-            else:
-                collide = True
+            collide = self.move_0()
         elif self.direction == 90:
-            if not is_wall(self.x + 1, self.y) and self.x < 9:
-                if is_bot(self.x + 1, self.y):
-                    collide = True
-                    print("bullet ", self.x + 1, self.y, 'killed bot on', bot.x, bot.y)
-                if is_player(self.x + 1, self.y):
-                    collide = True
-                    print("bullet ", self.x + 1, self.y, 'killed player on', player.x, player.y)
-                time.sleep(1 / 30)
-                self.x += self.speed
-            else:
-                collide = True
+            collide = self.move_90()
         elif self.direction == 180:
-            if not is_wall(self.x, self.y + 1) and self.y < 9:
-
-                if is_bot(self.x, self.y + 1):
-                    collide = True
-                    print("bullet ", self.x, self.y + 1, 'killed bot on', bot.x, bot.y)
-                if is_player(self.x, self.y + 1):
-                    collide = True
-                    print("bullet ", self.x, self.y + 1, 'killed player on', player.x, player.y)
-                self.y += self.speed
-                time.sleep(1 / 30)
-            else:
-                collide = True
+            collide = self.move_180()
         elif self.direction == 270:
-            if not is_wall(self.x - 1, self.y) and self.x > 0:
-                if is_bot(self.x - 1, self.y):
-                    collide = True
-                    print("bullet ", self.x - 1, self.y, 'killed bot on', bot.x, bot.y)
-                if is_player(self.x - 1, self.y):
-                    collide = True
-                    print("bullet ", self.x - 1, self.y, 'killed player on', player.x, player.y)
-                self.x -= self.speed
-                time.sleep(1 / 30)
-            else:
+            collide = self.move_270()
+        return collide
+
+    def move_0(self):
+        collide = False
+        if not is_wall(self.x, self.y - 1) and self.y > 0:
+            if is_bot(self.x, self.y - 1):
                 collide = True
+                print("bullet ", self.x, self.y - 1, 'killed bot on', bot.x, bot.y)
+            if is_player(self.x, self.y - 1):
+                collide = True
+                print("bullet ", self.x, self.y, 'killed player on', player.x, player.y)
+            self.y -= self.speed
+            time.sleep(1 / 30)
+        else:
+            collide = True
+        return collide
+
+    def move_90(self):
+        collide = False
+        if not is_wall(self.x + 1, self.y) and self.x < 9:
+            if is_bot(self.x + 1, self.y):
+                collide = True
+                print("bullet ", self.x + 1, self.y, 'killed bot on', bot.x, bot.y)
+            if is_player(self.x + 1, self.y):
+                collide = True
+                print("bullet ", self.x + 1, self.y, 'killed player on', player.x, player.y)
+            time.sleep(1 / 30)
+            self.x += self.speed
+        else:
+            collide = True
         return collide
 
 
-# one frame drawing
+    def move_180(self):
+        collide = False
+        if not is_wall(self.x, self.y + 1) and self.y < 9:
+
+            if is_bot(self.x, self.y + 1):
+                collide = True
+                print("bullet ", self.x, self.y + 1, 'killed bot on', bot.x, bot.y)
+            if is_player(self.x, self.y + 1):
+                collide = True
+                print("bullet ", self.x, self.y + 1, 'killed player on', player.x, player.y)
+            self.y += self.speed
+            time.sleep(1 / 30)
+        else:
+            collide = True
+        return collide
+
+    def move_270(self):
+        collide = False
+        if not is_wall(self.x - 1, self.y) and self.x > 0:
+            if is_bot(self.x - 1, self.y):
+                collide = True
+                print("bullet ", self.x - 1, self.y, 'killed bot on', bot.x, bot.y)
+            if is_player(self.x - 1, self.y):
+                collide = True
+                print("bullet ", self.x - 1, self.y, 'killed player on', player.x, player.y)
+            self.x -= self.speed
+            time.sleep(1 / 30)
+        else:
+            collide = True
+        return collide
+
+# auto-renewable of a screen every 300ms
 def screen_renew(background, player, bot):
     global bullet, bot_bullet
     while not player.exit_pressed:
@@ -291,57 +310,55 @@ def screen_renew(background, player, bot):
             break
 
 
-# auto-renewable of a screen every 300ms
+# one frame drawing
 def draw_player(background, player, bullet, bot):
     """draws the player image on the screen"""
     frame = background.copy()
-    #print("position of the bullet: ", bullet.x, bullet.y)
-    # print("drawing player at ", player.x, player.y)
     xpos, ypos = player.x * TILE_SIZE, player.y * TILE_SIZE
     frame[ypos: ypos + TILE_SIZE, xpos: xpos + TILE_SIZE] = player.image
     bot_x, bot_y = bot.x * TILE_SIZE, bot.y * TILE_SIZE
     frame[bot_y: bot_y + TILE_SIZE, bot_x: bot_x + TILE_SIZE] = bot_image
     for wall in walls:
-        xpos, ypos = wall.x * TILE_SIZE, wall.y * TILE_SIZE
-        frame[ypos: ypos + TILE_SIZE, xpos: xpos + TILE_SIZE] = wall.image
+        image_link(wall.x, wall.y, wall_image, frame)
     if bullet_moving:
-        xpos, ypos = int(bullet.x * TILE_SIZE), int(bullet.y * TILE_SIZE)
-        try:
-            frame[ypos: ypos + TILE_SIZE, xpos: xpos + TILE_SIZE] = bullet.image
-        except ValueError:
-            raise MyException
+        image_link(bullet.x, bullet.y, bullet.image, frame)
     if bot_bullet_moving:
-        xpos, ypos = int(bot_bullet.x * TILE_SIZE), int(bot_bullet.y * TILE_SIZE)
-        try:
-            frame[ypos: ypos + TILE_SIZE, xpos: xpos + TILE_SIZE] = bullet_image
-        except ValueError:
-            raise MyException
+        image_link(bot_bullet.x, bot_bullet.y, bullet.image, frame)
     cv2.imshow("frame", frame)
     cv2.waitKey(10)
 
+# creating a single object in the frame
+def image_link(x, y, image, frame):
+    xpos, ypos = int(x * TILE_SIZE), int(y * TILE_SIZE)
+    try:
+        frame[ypos: ypos + TILE_SIZE, xpos: xpos + TILE_SIZE] = image
+    except ValueError:
+        raise MyException
 
 # single screen drawing with static pos
 def double_size(img):
     """returns an image twice as big"""
     return np.kron(img, np.ones((2, 2, 1), dtype=img.dtype))
 
-
+# checking function is position a wall
 def is_wall(x, y):
     flag = False
+    if not 0 <= x <=9: flag = True
+    if not 0 <= y <= 9: flag = True
     for wall in walls:
         if int(wall.x) == int(x) and int(wall.y) == int(y):
             flag = True
             break
     return flag
 
-
+# checking function is position a bot
 def is_bot(x, y):
     global bot
     if bot.x - 0.5 <= x <= bot.x + 0.5:
         if bot.y - 0.5 <= y <= bot.y + 0.5:
             return True
 
-
+# checking function is position a player
 def is_player(x, y):
     global player
     if player.x - 0.5 <= x <= player.x + 0.5:
@@ -367,45 +384,24 @@ def step_direction(player):
 # function of processing a keyboard input
 def on_press(key):
     global player
-    # time.sleep(1)
     try:
-        print('alphanumeric key {0} pressed'.format(
-            key.char))
-
-        if key.char == 'w' or key.char == 'ц':
-            print('player forward detected')
-            player.forward()
-
-        if key.char == 's' or key.char == 'ы':
-            print('player backward detected')
-            player.backward()
-
-        if key.char == 'a' or key.char == 'ф':
-            print('player rotate A detected')
-            player.rotate_a()
-
-        if key.char == 'd' or key.char == 'в':
-            print('player rotate D detected')
-            player.rotate_d()
+        print('alphanumeric key {0} pressed'.format(key.char))
+        if key.char == 'w' or key.char == 'ц': player.forward()
+        if key.char == 's' or key.char == 'ы': player.backward()
+        if key.char == 'a' or key.char == 'ф': player.rotate_a()
+        if key.char == 'd' or key.char == 'в': player.rotate_d()
         if key.char == 'q' or key.char == 'й':
             player.exit_pressed = True
             return False
-
         if key.char == 'e' or key.char == 'у':
-            print("SHOOT!")
             player.shoot()
             return bullet
-
         if key == kb.Key.esc:
             # Stop listener
             player.exit_pressed = True
             return False
     except AttributeError:
-        print('special key {0} pressed'.format(
-            key))
-        if key == kb.Key.esc:
-            # Stop listener
-            return False
+        if key == kb.Key.esc: return False
 
 
 def on_release(key):
@@ -417,7 +413,7 @@ def on_release(key):
         player.exit_pressed = True
         return False
 
-# function of starting a game
+# function of starting a game, starting threads
 def start():
     thread_screen = threading.Thread(target=screen_renew, args=(background, player, bot), daemon=True)
     thread_bot = threading.Thread(target=bot.move_towards_target, daemon=True)
@@ -447,6 +443,7 @@ bot_image = double_size(cv2.imread("tiles/dragon.png"))
 player_image = double_size(cv2.imread("tiles/deep_elf_high_priest.png"))
 wall_image = double_size(cv2.imread("tiles/wall.png"))
 bullet_image = double_size(cv2.imread("tiles/ring.png"))
+
 background = np.zeros((SCREEN_SIZE_Y, SCREEN_SIZE_X, 3), np.uint8)
 # create black background image with BGR color channels
 
@@ -473,6 +470,4 @@ exit_pressed = False
 bullet_moving = False
 bot_bullet_moving = False
 print(player.exit_pressed)
-
 print("WALLS - ", walls)
-# start()
