@@ -11,6 +11,7 @@ Install dependencies:
 
 
 import threading
+import cutscene
 import time
 import walls_generator
 import cv2
@@ -311,6 +312,7 @@ def screen_renew(background, player, bot):
 
 
 # one frame drawing
+# creating an image of every object and putting it in the frame
 def draw_player(background, player, bullet, bot):
     """draws the player image on the screen"""
     frame = background.copy()
@@ -368,6 +370,7 @@ def is_player(x, y):
 
 
 # function of prediction next step based on direction
+"""Currently not used"""
 def step_direction(player):
     step = [] # [x, y]
     if player.direction == 0:
