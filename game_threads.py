@@ -27,7 +27,7 @@ class MyException(Exception): pass
 
 
 class Player:
-    exit_pressed = False
+    eexit_pressed = False
 
     def __init__(self, x, y, direction, image, exit_pressed):
         self.x = x
@@ -135,7 +135,7 @@ class Bot(Player):
 
     def move_towards_target(self):
         global player
-        while [self.x, self.y] != [player.x, player.y] or not exit_pressed:
+        while [self.x, self.y] != [player.x, player.y] or not player.exit_pressed:
             # Calculate relative position
             # delta - distance between bot and player
             delta_x = self.x - player.x
@@ -315,8 +315,8 @@ def screen_renew(background, player, bot):
         key = cv2.waitKey(10)
         time.sleep(1 / 60)
         if key == 27 or player.exit_pressed:
+            cv2.destroyAllWindows()
             break
-
 
 # one frame drawing
 # creating an image of every object and putting it in the frame
@@ -344,7 +344,7 @@ def image_link(x, y, image, frame):
     except ValueError:
         raise MyException
 
-# single screen drawing with static pos
+# single screen drawing with static po
 def double_size(img):
     """returns an image twice as big"""
     return np.kron(img, np.ones((2, 2, 1), dtype=img.dtype))
@@ -411,7 +411,9 @@ def on_press(key):
             player.exit_pressed = True
             return False
     except AttributeError:
-        if key == kb.Key.esc: return False
+        if key == kb.Key.esc:
+            player.exit_pressed = True
+            return False
 
 
 def on_release(key):
@@ -480,4 +482,4 @@ exit_pressed = False
 bullet_moving = False
 bot_bullet_moving = False
 print(player.exit_pressed)
-print("WALLS - ", walls)
+#print("WALLS - ", walls)
