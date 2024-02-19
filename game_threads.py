@@ -27,14 +27,14 @@ class MyException(Exception): pass
 
 
 class Player:
-    eexit_pressed = False
+    exit_pressed = False
 
-    def __init__(self, x, y, direction, image, exit_pressed):
+    def __init__(self, x, y, direction, image):
         self.x = x
         self.y = y
         self.direction = direction
         self.image = image
-        self.exit_pressed = exit_pressed
+
 
     # player move forward
     def forward(self):
@@ -305,7 +305,7 @@ class Bullet:
 # auto-renewable of a screen every 300ms
 def screen_renew(background, player, bot):
     global bullet, bot_bullet
-    while not player.exit_pressed:
+    while not Player.exit_pressed:
         draw_player(background, player, bullet, bot)
         # Update the bullet's position if it's moving
         if bullet_moving:
@@ -401,28 +401,28 @@ def on_press(key):
         if key.char == 'a' or key.char == 'ф': player.rotate_a()
         if key.char == 'd' or key.char == 'в': player.rotate_d()
         if key.char == 'q' or key.char == 'й':
-            player.exit_pressed = True
+            Player.exit_pressed = True
             return False
         if key.char == 'e' or key.char == 'у':
             player.shoot()
             return bullet
         if key == kb.Key.esc:
             # Stop listener
-            player.exit_pressed = True
+            Player.exit_pressed = True
             return False
     except AttributeError:
         if key == kb.Key.esc:
-            player.exit_pressed = True
+            Player.exit_pressed = True
             return False
 
 
 def on_release(key):
     if key == kb.Key.esc:
         # Stop listener
-        player.exit_pressed = True
+        Player.exit_pressed = True
         return False
     if key.char == 'q' or key.char == 'й':
-        player.exit_pressed = True
+        Player.exit_pressed = True
         return False
 
 # function of starting a game, starting threads
