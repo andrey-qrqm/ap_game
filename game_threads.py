@@ -106,6 +106,13 @@ class Player:
                 if bullet.move():
                     bullet_moving = False
                     print("COLLIDE!!!!")
+                    if is_bot(bullet.x, bullet.y):
+                        cutscene.cutscene(
+        text="Well, you've killed my bot. Aren't you feel guilty?",
+        songfile="song_1.wav",
+        imagefile="title.png",
+        wait=3
+    )
                     break
         bullet_moving = False
 
@@ -170,7 +177,7 @@ class Bot(Player):
             angle = 90
         elif 180 <= angle < 270:
             angle = 180
-        elif 270 <= angle <= 359:
+        elif 270 <= angle <= 360:
             angle = 270
         print("ANGLE - ", angle)
         return angle
@@ -190,8 +197,8 @@ class Bot(Player):
 
     # to move bot_bullet, checking if collide
     def _bot_move_bullet(self, bot_bullet):
-        global bot_bullet_moving
-        while bot_bullet_moving and not self.exit_pressed:
+        global bot_bullet_moving, player
+        while bot_bullet_moving and not player.exit_pressed:
             bot_bullet.move()
             time.sleep(1 / 30)
             with bot_bullet_lock:
