@@ -475,7 +475,7 @@ player = Player(xpos, ypos, 0, player_image)
 bot = Bot(1, 1, 0, bot_image)
 
 # create a walls object
-wall_show()
+#  wall_show()
 
 # creating bullets
 bullet = Bullet(0, 0, bullet_image, 0)
