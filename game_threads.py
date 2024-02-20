@@ -8,8 +8,7 @@ Install dependencies:
 
 
 ### LIBRARY ARCADE
-
-
+import random
 import threading
 import cutscene
 import time
@@ -150,6 +149,9 @@ class Bot(Player):
             # Move towards the target
             x_mem = self.x
             y_mem = self.y
+            variety = random.randint(0, 10)
+            if variety <= 3:
+                bot.shoot()
             if Player.exit_pressed:
                 break
             self.forward()
