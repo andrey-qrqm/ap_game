@@ -99,7 +99,7 @@ class Player:
 
     # to make bullet moving, checking if collide
     def _move_bullet(self, bullet):
-        global bullet_moving
+        global bullet_moving, bot
         while bullet_moving and not self.exit_pressed:
             time.sleep(1 / 30)
             with bullet_lock:
@@ -107,12 +107,14 @@ class Player:
                     bullet_moving = False
                     print("COLLIDE!!!!")
                     if is_bot(bullet.x, bullet.y):
-                        cutscene.cutscene(
-        text="Well, you've killed my bot. Aren't you feel guilty?",
-        songfile="song_1.wav",
-        imagefile="title.png",
-        wait=3
-    )
+                        bot.hp -= 1
+                        if bot.hp == 0:
+                            cutscene.cutscene(
+                            text="Well, you've killed my bot. Aren't you feel guilty?",
+                            songfile="song_1.wav",
+                            imagefile="title.png",
+
+                        )
                     break
         bullet_moving = False
 
@@ -120,6 +122,8 @@ class Player:
 class Bot(Player):
     # describing how bot is moving
     # spiral movement towards player
+    hp = 3
+
     def bot_move(self):
         while not exit_pressed:
             time.sleep(1)
@@ -135,7 +139,7 @@ class Bot(Player):
 
     def move_towards_target(self):
         global player
-        while [self.x, self.y] != [player.x, player.y] or not player.exit_pressed:
+        while [self.x, self.y] != [player.x, player.y] or not Player.exit_pressed:
             # Calculate relative position
             # delta - distance between bot and player
             delta_x = self.x - player.x
@@ -146,6 +150,8 @@ class Bot(Player):
             # Move towards the target
             x_mem = self.x
             y_mem = self.y
+            if Player.exit_pressed:
+                break
             self.forward()
             # if bot is stuck, it will try to rotate and move
             if self.x == x_mem and self.y == y_mem:
@@ -166,11 +172,9 @@ class Bot(Player):
     def calculate_angle(self, delta_x, delta_y):
         # Calculate the angle (in degrees) from (1, 0) to (delta_x, delta_y)
         angle = math.degrees(math.atan2(delta_y, delta_x))
-        print("ANGLE - ", angle)
         # Ensure the angle is between 0 and 360
         if angle < 0:
             angle += 360
-        print("ANGLE - ", angle)
         if 0 <= angle < 90:
             angle = 0
         elif 90 <= angle < 180:
@@ -179,7 +183,7 @@ class Bot(Player):
             angle = 180
         elif 270 <= angle <= 360:
             angle = 270
-        print("ANGLE - ", angle)
+        print("ANGLE - ", angle, "EXITTT - ", Player.exit_pressed)
         return angle
 
 
@@ -467,9 +471,9 @@ direction = 0
 walls = []  # ARRAY OF TYPE Wall
 
 # create a player object
-player = Player(xpos, ypos, 0, player_image, False)
+player = Player(xpos, ypos, 0, player_image)
 # create a bot object
-bot = Bot(1, 1, 0, bot_image, False)
+bot = Bot(1, 1, 0, bot_image)
 
 # create a walls object
 wall_show()
@@ -481,5 +485,5 @@ bot_bullet = Bullet(0, 0, bullet_image, 0)
 exit_pressed = False
 bullet_moving = False
 bot_bullet_moving = False
-print(player.exit_pressed)
+print(Player.exit_pressed)
 #print("WALLS - ", walls)

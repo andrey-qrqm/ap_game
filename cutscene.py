@@ -37,8 +37,10 @@ def cutscene(text: str, songfile: str, imagefile: str, wait: int = 3):
     )
     cv2.imshow("Cutscene", img)
 
-    # wait for user input
+    # wait for user input\
+    i = 0
     while True:
+        i += 1
         key = chr(cv2.waitKey(1) & 0xFF)
         if key in string.printable:
             break
