@@ -183,10 +183,7 @@ class Bot(Player):
             angle = 180
         elif 270 <= angle <= 360:
             angle = 270
-        print("ANGLE - ", angle, "EXITTT - ", Player.exit_pressed)
         return angle
-
-
 
     #set bot_bullet as moving object
     def bot_shoot(self):
