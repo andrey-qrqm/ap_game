@@ -7,3 +7,9 @@ cutscene.cutscene(
         imagefile="title.png",
     )
 game_threads.start()
+if game_threads.Player.exit_pressed:
+    cutscene.cutscene(
+        text="Well, you've won my game.",
+        songfile="song_1.wav",
+        imagefile="title.png",
+    )

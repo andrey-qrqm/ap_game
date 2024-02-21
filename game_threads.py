@@ -12,6 +12,8 @@ import random
 import threading
 import cutscene
 import time
+
+import game_threads
 import walls_generator
 import cv2
 import math
@@ -108,13 +110,15 @@ class Player:
                     if is_bot(bullet.x, bullet.y):
                         bot.hp -= 1
                         if bot.hp == 0:
-                            cutscene.cutscene(
-                            text="Well, you've killed my bot. Aren't you feel guilty?",
-                            songfile="song_1.wav",
-                            imagefile="title.png",
-
-                        )
-                    break
+                            print("THE BOT WAS KILLED")
+                            print("-----------END OF THE GAME--------------")
+                            Player.exit_pressed = True
+                            bullet_moving = False
+                            print(Player.exit_pressed)
+                            print(threading.enumerate())
+                            print(threading.main_thread())
+                            break
+                        break
         bullet_moving = False
 
 
@@ -231,6 +235,7 @@ class Bullet:
         self.speed = speed
 
     # function of processing the bullet moving
+
     def move(self):
         collide = False
         if self.direction == 0:
@@ -243,15 +248,10 @@ class Bullet:
             collide = self.move_270()
         return collide
 
+
     def move_0(self):
         collide = False
-        if not is_wall(self.x, self.y - 1) and self.y > 0:
-            if is_bot(self.x, self.y - 1):
-                collide = True
-                print("bullet ", self.x, self.y - 1, 'killed bot on', bot.x, bot.y)
-            if is_player(self.x, self.y - 1):
-                collide = True
-                print("bullet ", self.x, self.y, 'killed player on', player.x, player.y)
+        if not is_wall(self.x, self.y - 1) and not is_bot(self.x, self.y - 1) and self.y > 0:
             self.y -= self.speed
             time.sleep(1 / 30)
         else:
@@ -260,15 +260,9 @@ class Bullet:
 
     def move_90(self):
         collide = False
-        if not is_wall(self.x + 1, self.y) and self.x < 9:
-            if is_bot(self.x + 1, self.y):
-                collide = True
-                print("bullet ", self.x + 1, self.y, 'killed bot on', bot.x, bot.y)
-            if is_player(self.x + 1, self.y):
-                collide = True
-                print("bullet ", self.x + 1, self.y, 'killed player on', player.x, player.y)
-            time.sleep(1 / 30)
+        if not is_wall(self.x + 1, self.y) and not is_bot(self.x + 1, self.y) and self.x <= 9:
             self.x += self.speed
+            time.sleep(1 / 30)
         else:
             collide = True
         return collide
@@ -276,14 +270,8 @@ class Bullet:
 
     def move_180(self):
         collide = False
-        if not is_wall(self.x, self.y + 1) and self.y < 9:
+        if not is_wall(self.x, self.y + 1) and not is_bot(self.x, self.y + 1) and self.y <= 9:
 
-            if is_bot(self.x, self.y + 1):
-                collide = True
-                print("bullet ", self.x, self.y + 1, 'killed bot on', bot.x, bot.y)
-            if is_player(self.x, self.y + 1):
-                collide = True
-                print("bullet ", self.x, self.y + 1, 'killed player on', player.x, player.y)
             self.y += self.speed
             time.sleep(1 / 30)
         else:
@@ -292,13 +280,7 @@ class Bullet:
 
     def move_270(self):
         collide = False
-        if not is_wall(self.x - 1, self.y) and self.x > 0:
-            if is_bot(self.x - 1, self.y):
-                collide = True
-                print("bullet ", self.x - 1, self.y, 'killed bot on', bot.x, bot.y)
-            if is_player(self.x - 1, self.y):
-                collide = True
-                print("bullet ", self.x - 1, self.y, 'killed player on', player.x, player.y)
+        if not is_wall(self.x - 1, self.y) and not is_bot(self.x - 1, self.y) and self.x > 0:
             self.x -= self.speed
             time.sleep(1 / 30)
         else:
@@ -355,7 +337,7 @@ def double_size(img):
 # checking function is position a wall
 def is_wall(x, y):
     flag = False
-    if not 0 <= x <=9: flag = True
+    if not 0 <= x <= 9: flag = True
     if not 0 <= y <= 9: flag = True
     for wall in walls:
         if int(wall.x) == int(x) and int(wall.y) == int(y):
@@ -440,7 +422,10 @@ def start():
         listener.join()
     thread_screen.join()
     thread_bot.join()
-    cv2.destroyAllWindows()
+    if Player.exit_pressed:
+        kb.Listener = kb.Listener.stop
+
+    #cv2.destroyAllWindows()
 
 # function of creating walls on the level
 def wall_show():
