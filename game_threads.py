@@ -74,7 +74,7 @@ class Player:
         self.image = cv2.rotate(self.image, cv2.ROTATE_90_COUNTERCLOCKWISE)
         self.direction -= 90
         if self.direction < 0: self.direction += 360
-        print(self.direction)
+        print('rotate_a', self.direction, self)
         return self
 
     # player rotate clockwise
@@ -82,7 +82,7 @@ class Player:
         self.image = cv2.rotate(self.image, cv2.ROTATE_90_CLOCKWISE)
         self.direction += 90
         if self.direction > 270: self.direction -= 360
-        print(self.direction)
+        print(self.direction, 'rotate_b', self)
         return self
 
     # def to launch a bullet from player, starting own bullet thread
@@ -95,12 +95,16 @@ class Player:
                 # bullet.direction = self.direction
                 if not is_wall(pos_x, pos_y):
                     bullet = Bullet(pos_x, pos_y, bullet_image, self.direction)
-                threading.Thread(target=self._move_bullet, args=(bullet,), daemon=True).start()
+                bullet_thread = threading.Thread(target=self._move_bullet, args=(bullet,), daemon=True)
+                bullet_thread.start()
+
+
 
     # to make bullet moving, checking if collide
     def _move_bullet(self, bullet):
-        global bullet_moving, bot
-        while bullet_moving and not self.exit_pressed:
+        global bullet_moving
+        while bullet_moving and not self.exit_pressed and Bot.hp > 0:
+            print("move_bullet is running")
             time.sleep(1 / 30)
             print("bullet is moving")
             with bullet_lock:
@@ -109,18 +113,8 @@ class Player:
                     print("COLLIDE!!!! here")
                     print("Bullet stop moving")
                     if is_bot(bullet.x, bullet.y):
-                        bot.hp -= 1
-                        print("BOT HP - ", bot.hp)
-                        if bot.hp == 0:
-                            print("THE BOT WAS KILLED")
-                            print("-----------END OF THE GAME--------------")
-                            Player.exit_pressed = True
-                            bullet_moving = False
-                            print(Player.exit_pressed, bullet_moving)
-                            print(threading.enumerate())
-                            print(threading.main_thread())
-
-                            break
+                        Bot.hp -= 1
+                        print("BOT HP - ", Bot.hp)
                         break
         bullet_moving = False
 
@@ -129,10 +123,17 @@ class Bot(Player):
     # describing how bot is moving
     # spiral movement towards player
     hp = 3
-
     def move_towards_target(self):
         global player
         while [self.x, self.y] != [player.x, player.y] or not Player.exit_pressed:
+
+            if Bot.hp <= 0:
+                Player.exit_pressed = True
+                print(threading.enumerate())
+                print("BOT hp is 0")
+                break
+
+            print("move_towards_target is running")
             # Calculate relative position
             # delta - distance between bot and player
             delta_x = self.x - player.x
@@ -154,6 +155,8 @@ class Bot(Player):
             if self.x == x_mem and self.y == y_mem:
                 self.rotate_d()
                 self.forward()
+                # Check if Bot's HP is less than or equal to 0, set exit_pressed to True
+
 
     def rotate_towards_target(self, delta_x, delta_y):
         angle_to_target = self.calculate_angle(delta_x, delta_y)
@@ -197,6 +200,7 @@ class Bot(Player):
     def _bot_move_bullet(self, bot_bullet):
         global bot_bullet_moving, player
         while bot_bullet_moving and not player.exit_pressed:
+            print("move_towards_target is running")
             bot_bullet.move()
             time.sleep(1 / 30)
             with bot_bullet_lock:
@@ -227,21 +231,9 @@ class Bullet:
         self.speed = speed
 
     # function of processing the bullet moving
-    '''
     def move(self):
         collide = False
-        if self.direction == 0:
-            collide = self.move_0()
-        elif self.direction == 90:
-            collide = self.move_90()
-        elif self.direction == 180:
-            collide = self.move_180()
-        elif self.direction == 270:
-            collide = self.move_270()
-        return collide
-'''
-    def move(self):
-        collide = False
+
         # Check if the shooter is facing upwards (direction = 0) and not at the top edge
         if self.direction == 0 and self.y > 0:
             collide = self.move_until_True()
@@ -296,7 +288,7 @@ def screen_renew(background, player, bot):
         key = cv2.waitKey(10)
         time.sleep(1 / 60)
         if key == 27 or player.exit_pressed:
-            cv2.destroyAllWindows()
+            #cv2.destroyAllWindows()
             break
 
 # one frame drawing
@@ -382,17 +374,22 @@ def on_press(key):
         if key.char == 'a' or key.char == 'ф': player.rotate_a()
         if key.char == 'd' or key.char == 'в': player.rotate_d()
         if key.char == 'q' or key.char == 'й':
+            print("Exiting the game")
             Player.exit_pressed = True
+            print(threading.enumerate())
             return False
         if key.char == 'e' or key.char == 'у':
             player.shoot()
             return bullet
         if key == kb.Key.esc:
             # Stop listener
+            print("Exiting the game")
             Player.exit_pressed = True
             return False
+
     except AttributeError:
         if key == kb.Key.esc:
+            print("Exiting the game")
             Player.exit_pressed = True
             return False
 
@@ -408,6 +405,37 @@ def on_release(key):
 
 # function of starting a game, starting threads
 def start():
+    global player, bot, bullet, bot_bullet, bullet_moving, bot_bullet_moving
+
+    def cleanup():
+        print("Exiting the game...")
+        Player.exit_pressed = True
+        cv2.destroyAllWindows()
+
+    try:
+        thread_screen = threading.Thread(target=screen_renew, args=(background, player, bot), daemon=True)
+        thread_bot = threading.Thread(target=bot.move_towards_target, daemon=True)
+        thread_bot.start()
+        thread_screen.start()
+
+        with kb.Listener(on_press=on_press, on_release=on_release) as listener:
+            listener.join()  # Wait for the listener thread to finish
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    finally:
+        cleanup()
+
+    # Wait for other threads to finish before exiting
+    thread_screen.join()
+    thread_bot.join()
+
+    print("All threads terminated.")
+
+
+
+def start_2():
     thread_screen = threading.Thread(target=screen_renew, args=(background, player, bot), daemon=True)
     thread_bot = threading.Thread(target=bot.move_towards_target, daemon=True)
     thread_bot.start()
@@ -420,8 +448,9 @@ def start():
     thread_bot.join()
     if Player.exit_pressed:
         kb.Listener = kb.Listener.stop
-
-    #cv2.destroyAllWindows()
+    print("All threads terminated")
+    print(threading.enumerate())
+    cv2.destroyAllWindows()
 
 # function of creating walls on the level
 def wall_show():
