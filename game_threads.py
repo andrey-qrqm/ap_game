@@ -13,7 +13,6 @@ import threading
 import cutscene
 import time
 
-import game_threads
 import walls_generator
 import cv2
 import math
@@ -103,20 +102,24 @@ class Player:
         global bullet_moving, bot
         while bullet_moving and not self.exit_pressed:
             time.sleep(1 / 30)
+            print("bullet is moving")
             with bullet_lock:
                 if bullet.move():
                     bullet_moving = False
-                    print("COLLIDE!!!!")
+                    print("COLLIDE!!!! here")
+                    print("Bullet stop moving")
                     if is_bot(bullet.x, bullet.y):
                         bot.hp -= 1
+                        print("BOT HP - ", bot.hp)
                         if bot.hp == 0:
                             print("THE BOT WAS KILLED")
                             print("-----------END OF THE GAME--------------")
                             Player.exit_pressed = True
                             bullet_moving = False
-                            print(Player.exit_pressed)
+                            print(Player.exit_pressed, bullet_moving)
                             print(threading.enumerate())
                             print(threading.main_thread())
+
                             break
                         break
         bullet_moving = False
@@ -126,19 +129,6 @@ class Bot(Player):
     # describing how bot is moving
     # spiral movement towards player
     hp = 3
-
-    def bot_move(self):
-        while not exit_pressed:
-            time.sleep(1)
-            x_mem = self.x
-            y_mem = self.y
-            self.forward()
-
-            if self.x == x_mem and self.y == y_mem:
-                self.rotate_d()
-                self.rotate_d()
-                self.bot_shoot()
-            pass
 
     def move_towards_target(self):
         global player
@@ -155,7 +145,8 @@ class Bot(Player):
             y_mem = self.y
             variety = random.randint(0, 10)
             if variety <= 3:
-                bot.shoot()
+                pass
+                # bot.shoot()
             if Player.exit_pressed:
                 break
             self.forward()
@@ -209,9 +200,10 @@ class Bot(Player):
             bot_bullet.move()
             time.sleep(1 / 30)
             with bot_bullet_lock:
+                #print("bullet is moving")
                 if bot_bullet.move():
                     bot_bullet_moving = False
-                    print("COLLIDE!!!!")
+                    #print("Bullet stop moving")
                     break
         bot_bullet_moving = False
 
@@ -235,7 +227,7 @@ class Bullet:
         self.speed = speed
 
     # function of processing the bullet moving
-
+    '''
     def move(self):
         collide = False
         if self.direction == 0:
@@ -247,45 +239,52 @@ class Bullet:
         elif self.direction == 270:
             collide = self.move_270()
         return collide
-
-
-    def move_0(self):
+'''
+    def move(self):
         collide = False
-        if not is_wall(self.x, self.y - 1) and not is_bot(self.x, self.y - 1) and self.y > 0:
+        # Check if the shooter is facing upwards (direction = 0) and not at the top edge
+        if self.direction == 0 and self.y > 0:
+            collide = self.move_until_True()
+        # Check if the shooter is facing right (direction = 90) and not at the right edge
+        elif self.direction == 90 and self.x < 9:
+            collide = self.move_until_True()
+        # Check if the shooter is facing downwards (direction = 180) and not at the bottom edge
+        elif self.direction == 180 and self.y < 9:
+            collide = self.move_until_True()
+        # Check if the shooter is facing left (direction = 270) and not at the left edge
+        elif self.direction == 270 and self.x > 0:
+            collide = self.move_until_True()
+        else:
+            collide = True
+        return collide
+
+    def move_until_True(self):
+        if self.direction == 0:
             self.y -= self.speed
-            time.sleep(1 / 30)
-        else:
-            collide = True
-        return collide
-
-    def move_90(self):
-        collide = False
-        if not is_wall(self.x + 1, self.y) and not is_bot(self.x + 1, self.y) and self.x <= 9:
+        elif self.direction == 90:
             self.x += self.speed
-            time.sleep(1 / 30)
-        else:
-            collide = True
-        return collide
-
-
-    def move_180(self):
-        collide = False
-        if not is_wall(self.x, self.y + 1) and not is_bot(self.x, self.y + 1) and self.y <= 9:
-
+        elif self.direction == 180:
             self.y += self.speed
-            time.sleep(1 / 30)
-        else:
-            collide = True
-        return collide
-
-    def move_270(self):
-        collide = False
-        if not is_wall(self.x - 1, self.y) and not is_bot(self.x - 1, self.y) and self.x > 0:
+        elif self.direction == 270:
             self.x -= self.speed
-            time.sleep(1 / 30)
-        else:
-            collide = True
-        return collide
+
+            # Check for collisions with walls or bots
+        if self.check_collision():
+            return True
+
+            # Check if the next step is outside the grid, stop and return true
+        if not (0 <= self.x <= 9 and 0 <= self.y <= 9):
+            return True
+
+        time.sleep(1 / 30)
+        return False
+
+    def check_collision(self):
+        # Check for collisions with walls or bots at the new position
+        if is_wall(self.x, self.y) or is_bot(self.x, self.y):
+            print("COLLIDE!!!!")
+            return True
+        return False
 
 # auto-renewable of a screen every 300ms
 def screen_renew(background, player, bot):
@@ -293,10 +292,7 @@ def screen_renew(background, player, bot):
     while not Player.exit_pressed:
         draw_player(background, player, bullet, bot)
         # Update the bullet's position if it's moving
-        if bullet_moving:
-            bullet.move()
-        if bot_bullet_moving:
-            bot_bullet.move()
+
         key = cv2.waitKey(10)
         time.sleep(1 / 60)
         if key == 27 or player.exit_pressed:
