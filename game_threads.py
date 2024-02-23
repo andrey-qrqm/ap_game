@@ -10,6 +10,9 @@ Install dependencies:
 ### LIBRARY ARCADE
 import random
 import threading
+
+import keyboard
+
 import cutscene
 import time
 
@@ -89,6 +92,7 @@ class Player:
     def shoot(self):
         global bullet_moving, bullet
         with bullet_lock:
+            print("Player bullet exist")
             if not bullet_moving:
                 bullet_moving = True
                 pos_x, pos_y = step_direction(self)
@@ -103,7 +107,7 @@ class Player:
     # to make bullet moving, checking if collide
     def _move_bullet(self, bullet):
         global bullet_moving
-        while bullet_moving and not self.exit_pressed and Bot.hp > 0:
+        while bullet_moving and not Player.exit_pressed and Bot.hp > 0:
             print("move_bullet is running")
             time.sleep(1 / 30)
             print("bullet is moving")
@@ -122,15 +126,20 @@ class Player:
 class Bot(Player):
     # describing how bot is moving
     # spiral movement towards player
-    hp = 3
+    hp = 1
     def move_towards_target(self):
         global player
         while [self.x, self.y] != [player.x, player.y] or not Player.exit_pressed:
-
+            print("Bot is moving")
             if Bot.hp <= 0:
                 Player.exit_pressed = True
                 print(threading.enumerate())
                 print("BOT hp is 0")
+                # the next line of code make me waste 8 hours of debugging, it is the only solution I have found
+                # Without it thread_screen is shutting down and program exits the cv2 window, however it didn't finish
+                # and waits for something. By pressing 'q' I am triggering proper finish and exit. If you would like to
+                # find other solution I would be happy to hear them.
+                keyboard.press('q')
                 break
 
             print("move_towards_target is running")
@@ -282,14 +291,9 @@ class Bullet:
 def screen_renew(background, player, bot):
     global bullet, bot_bullet
     while not Player.exit_pressed:
+        print("screen_renew")
         draw_player(background, player, bullet, bot)
         # Update the bullet's position if it's moving
-
-        key = cv2.waitKey(10)
-        time.sleep(1 / 60)
-        if key == 27 or player.exit_pressed:
-            #cv2.destroyAllWindows()
-            break
 
 # one frame drawing
 # creating an image of every object and putting it in the frame
@@ -365,9 +369,14 @@ def step_direction(player):
 
 
 # function of processing a keyboard input
+
 def on_press(key):
     global player
+    print("on_press....")
     try:
+        if Bot.hp == 0:
+            Player.exit_pressed = True
+            return False
         print('alphanumeric key {0} pressed'.format(key.char))
         if key.char == 'w' or key.char == 'ц': player.forward()
         if key.char == 's' or key.char == 'ы': player.backward()
@@ -416,11 +425,14 @@ def start():
         thread_screen = threading.Thread(target=screen_renew, args=(background, player, bot), daemon=True)
         thread_bot = threading.Thread(target=bot.move_towards_target, daemon=True)
         thread_bot.start()
+        print("thread_bot started")
         thread_screen.start()
+        print("thread_screen started")
 
         with kb.Listener(on_press=on_press, on_release=on_release) as listener:
+            print("thread Listener started")
             listener.join()  # Wait for the listener thread to finish
-
+            print("thread Listener joined")
     except Exception as e:
         print(f"An error occurred: {e}")
 
