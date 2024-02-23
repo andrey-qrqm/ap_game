@@ -10,12 +10,8 @@ Install dependencies:
 ### LIBRARY ARCADE
 import random
 import threading
-
 import keyboard
-
-import cutscene
 import time
-
 import walls_generator
 import cv2
 import math
@@ -37,7 +33,6 @@ class Player:
         self.y = y
         self.direction = direction
         self.image = image
-
 
     # player move forward
     def forward(self):
@@ -88,6 +83,23 @@ class Player:
         print(self.direction, 'rotate_b', self)
         return self
 
+    def step_direction(self):
+        step = 1
+        x, y = self.x, self.y
+        if self.direction == 0:
+            x = self.x
+            y = self.y - step
+        elif self.direction == 90:
+            x = self.x + step
+            y = self.y
+        elif self.direction == 180:
+            x = self.x
+            y = self.y + step
+        elif self.direction == 270:
+            x = self.x - step
+            y = self.y
+        return x, y
+
     # def to launch a bullet from player, starting own bullet thread
     def shoot(self):
         global bullet_moving, bullet
@@ -95,10 +107,10 @@ class Player:
             print("Player bullet exist")
             if not bullet_moving:
                 bullet_moving = True
-                pos_x, pos_y = step_direction(self)
+                pos_x, pos_y = self.step_direction()
                 # bullet.direction = self.direction
                 if not is_wall(pos_x, pos_y):
-                    bullet = Bullet(pos_x, pos_y, bullet_image, self.direction)
+                    bullet = Bullet(pos_x, pos_y, bullet_image, self.direction, "player")
                 bullet_thread = threading.Thread(target=self._move_bullet, args=(bullet,), daemon=True)
                 bullet_thread.start()
 
@@ -116,17 +128,19 @@ class Player:
                     bullet_moving = False
                     print("COLLIDE!!!! here")
                     print("Bullet stop moving")
-                    if is_bot(bullet.x, bullet.y):
+                    if is_bot(bullet.x, bullet.y) and bullet.shooter == "player":
                         Bot.hp -= 1
-                        print("BOT HP - ", Bot.hp)
+                        print("BOT HP - ", Bot.hp, "SHOOTER - ", bullet.shooter)
                         break
         bullet_moving = False
 
 
 class Bot(Player):
+    # Bot Health Points (how many times bullet should hit bot to it to be killed)
+    hp = 3
+
     # describing how bot is moving
     # spiral movement towards player
-    hp = 1
     def move_towards_target(self):
         global player
         while [self.x, self.y] != [player.x, player.y] or not Player.exit_pressed:
@@ -156,7 +170,7 @@ class Bot(Player):
             variety = random.randint(0, 10)
             if variety <= 3:
                 pass
-                # bot.shoot()
+                bot.bot_shoot()
             if Player.exit_pressed:
                 break
             self.forward()
@@ -164,7 +178,6 @@ class Bot(Player):
             if self.x == x_mem and self.y == y_mem:
                 self.rotate_d()
                 self.forward()
-                # Check if Bot's HP is less than or equal to 0, set exit_pressed to True
 
 
     def rotate_towards_target(self, delta_x, delta_y):
@@ -201,7 +214,9 @@ class Bot(Player):
         with bot_bullet_lock:
             if not bot_bullet_moving:
                 bot_bullet_moving = True
-                bot_bullet = Bullet(self.x, self.y, bullet_image, self.direction)
+                posx, posy = self.step_direction()
+                if not is_wall(posx, posy):
+                    bot_bullet = Bullet(posx, posy, bullet_image, self.direction, "bot")
                 print("start position of bot bullet is - ", bot_bullet.x, bot_bullet.y, bot_bullet.direction)
                 threading.Thread(target=self._bot_move_bullet, args=(bot_bullet,), daemon=True).start()
 
@@ -232,12 +247,14 @@ class Wall:
 
 # constants measured in pixel
 class Bullet:
-    def __init__(self, x, y, image, direction, speed=0.25):
+    speed = 0.5
+
+    def __init__(self, x, y, image, direction, shooter):
         self.x = x
         self.y = y
         self.image = image
         self.direction = direction
-        self.speed = speed
+        self.shooter = shooter
 
     # function of processing the bullet moving
     def move(self):
@@ -291,7 +308,7 @@ class Bullet:
 def screen_renew(background, player, bot):
     global bullet, bot_bullet
     while not Player.exit_pressed:
-        print("screen_renew")
+        #print("screen_renew")
         draw_player(background, player, bullet, bot)
         # Update the bullet's position if it's moving
 
@@ -439,10 +456,6 @@ def start():
     finally:
         cleanup()
 
-    # Wait for other threads to finish before exiting
-    thread_screen.join()
-    thread_bot.join()
-
     print("All threads terminated.")
 
 
@@ -497,11 +510,11 @@ player = Player(xpos, ypos, 0, player_image)
 bot = Bot(1, 1, 0, bot_image)
 
 # create a walls object
-#  wall_show()
+#wall_show()
 
 # creating bullets
-bullet = Bullet(0, 0, bullet_image, 0)
-bot_bullet = Bullet(0, 0, bullet_image, 0)
+bullet = Bullet(0, 0, bullet_image, 0, "player")
+bot_bullet = Bullet(0, 0, bullet_image, 0, "bot")
 
 exit_pressed = False
 bullet_moving = False
