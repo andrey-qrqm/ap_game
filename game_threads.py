@@ -112,6 +112,7 @@ class Player:
                 # bullet.direction = self.direction
                 if not is_wall(pos_x, pos_y):
                     bullet = Bullet(pos_x, pos_y, bullet_image, self.direction, "player")
+                    bullet.bullet_rotation()
                 bullet_thread = threading.Thread(target=self._move_bullet, args=(bullet,), daemon=True)
                 bullet_thread.start()
 
@@ -134,6 +135,8 @@ class Player:
                         print("BOT HP - ", Bot.hp, "SHOOTER - ", bullet.shooter)
                         break
         bullet_moving = False
+
+
 
 
 class Bot(Player):
@@ -171,6 +174,7 @@ class Bot(Player):
                 y_mem = self.y
                 variety = random.randint(0, 10)
                 if variety <= 3:
+                    time.sleep(1)
                     bot.bot_shoot()
                 if Player.exit_pressed:
                     break
@@ -190,6 +194,7 @@ class Bot(Player):
                 self.rotate_d()
             else:
                 self.rotate_a()
+
 
     # Function to calculate the angle of rotation
     def calculate_angle(self, delta_x, delta_y):
@@ -217,9 +222,10 @@ class Bot(Player):
                 bot_bullet_moving = True
                 posx, posy = self.step_direction()
                 if not is_wall(posx, posy):
-                    bot_bullet = Bullet(posx, posy, bullet_image, self.direction, "bot")
-                print("start position of bot bullet is - ", bot_bullet.x, bot_bullet.y, bot_bullet.direction)
+                    bot_bullet = Bullet(posx, posy, bullet_image, bot.direction, "bot")
+                    bot_bullet.bullet_rotation()
                 threading.Thread(target=self._bot_move_bullet, args=(bot_bullet,), daemon=True).start()
+
 
     # to move bot_bullet, checking if collide
     def _bot_move_bullet(self, bot_bullet):
@@ -260,7 +266,6 @@ class Bullet:
     # function of processing the bullet moving
     def move(self):
         collide = False
-
         # Check if the shooter is facing upwards (direction = 0) and not at the top edge
         if self.direction == 0 and self.y > 0:
             collide = self.move_until_True()
@@ -276,6 +281,7 @@ class Bullet:
         else:
             collide = True
         return collide
+
 
     def move_until_True(self):
         if self.direction == 0:
@@ -297,6 +303,16 @@ class Bullet:
 
         time.sleep(1 / 30)
         return False
+
+    def bullet_rotation(self):
+        if self.direction == 0:
+            pass
+        elif self.direction == 90:
+            self.image = cv2.rotate(self.image, cv2.ROTATE_90_CLOCKWISE)
+        elif self.direction == 180:
+            self.image = cv2.rotate(self.image, cv2.ROTATE_180)
+        elif self.direction == 270:
+            self.image = cv2.rotate(self.image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
     def check_collision(self):
         # Check for collisions with walls or bots at the new position
@@ -516,7 +532,7 @@ player = Player(xpos, ypos, 0, player_image)
 bot = Bot(1, 1, 0, bot_image)
 
 # create a walls object
-#wall_show()
+wall_show()
 
 # creating bullets
 bullet = Bullet(0, 0, bullet_image, 0, "player")
