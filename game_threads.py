@@ -20,6 +20,7 @@ from pynput import keyboard as kb
 
 bullet_lock = threading.Lock()
 bot_bullet_lock = threading.Lock()
+bot_image_lock = threading.Lock()
 
 
 class MyException(Exception): pass
@@ -143,41 +144,41 @@ class Bot(Player):
     # spiral movement towards player
     def move_towards_target(self):
         global player
-        while [self.x, self.y] != [player.x, player.y] or not Player.exit_pressed:
-            print("Bot is moving")
-            if Bot.hp <= 0:
-                Player.exit_pressed = True
-                print(threading.enumerate())
-                print("BOT hp is 0")
-                # the next line of code make me waste 8 hours of debugging, it is the only solution I have found
-                # Without it thread_screen is shutting down and program exits the cv2 window, however it didn't finish
-                # and waits for something. By pressing 'q' I am triggering proper finish and exit. If you would like to
-                # find other solution I would be happy to hear them.
-                keyboard.press('q')
-                break
+        with bot_image_lock:
+            while [self.x, self.y] != [player.x, player.y] or not Player.exit_pressed:
+                print("Bot is moving")
+                if Bot.hp <= 0:
+                    Player.exit_pressed = True
+                    print(threading.enumerate())
+                    print("BOT hp is 0")
+                    # the next line of code make me waste 8 hours of debugging, it is the only solution I have found
+                    # Without it thread_screen is shutting down and program exits the cv2 window, however it didn't finish
+                    # and waits for something. By pressing 'q' I am triggering proper finish and exit. If you would like to
+                    # find other solution I would be happy to hear them.
+                    keyboard.press('q')
+                    break
 
-            print("move_towards_target is running")
-            # Calculate relative position
-            # delta - distance between bot and player
-            delta_x = self.x - player.x
-            delta_y = self.y - player.y
-            time.sleep(0.33)
-            # Rotate towards the target
-            self.rotate_towards_target(delta_x, delta_y)
-            # Move towards the target
-            x_mem = self.x
-            y_mem = self.y
-            variety = random.randint(0, 10)
-            if variety <= 3:
-                pass
-                bot.bot_shoot()
-            if Player.exit_pressed:
-                break
-            self.forward()
-            # if bot is stuck, it will try to rotate and move
-            if self.x == x_mem and self.y == y_mem:
-                self.rotate_d()
+                print("move_towards_target is running")
+                # Calculate relative position
+                # delta - distance between bot and player
+                delta_x = self.x - player.x
+                delta_y = self.y - player.y
+                time.sleep(0.33)
+                # Rotate towards the target
+                self.rotate_towards_target(delta_x, delta_y)
+                # Move towards the target
+                x_mem = self.x
+                y_mem = self.y
+                variety = random.randint(0, 10)
+                if variety <= 3:
+                    bot.bot_shoot()
+                if Player.exit_pressed:
+                    break
                 self.forward()
+                # if bot is stuck, it will try to rotate and move
+                if self.x == x_mem and self.y == y_mem:
+                    self.rotate_d()
+                    self.forward()
 
 
     def rotate_towards_target(self, delta_x, delta_y):
@@ -320,7 +321,7 @@ def draw_player(background, player, bullet, bot):
     xpos, ypos = player.x * TILE_SIZE, player.y * TILE_SIZE
     frame[ypos: ypos + TILE_SIZE, xpos: xpos + TILE_SIZE] = player.image
     bot_x, bot_y = bot.x * TILE_SIZE, bot.y * TILE_SIZE
-    frame[bot_y: bot_y + TILE_SIZE, bot_x: bot_x + TILE_SIZE] = bot_image
+    frame[bot_y: bot_y + TILE_SIZE, bot_x: bot_x + TILE_SIZE] = bot.image
     for wall in walls:
         image_link(wall.x, wall.y, wall_image, frame)
     if bullet_moving:
@@ -440,8 +441,9 @@ def start():
 
     try:
         thread_screen = threading.Thread(target=screen_renew, args=(background, player, bot), daemon=True)
-        thread_bot = threading.Thread(target=bot.move_towards_target, daemon=True)
-        thread_bot.start()
+        with bot_image_lock:
+            thread_bot = threading.Thread(target=bot.move_towards_target, daemon=True)
+            thread_bot.start()
         print("thread_bot started")
         thread_screen.start()
         print("thread_screen started")
@@ -489,10 +491,14 @@ SCREEN_SIZE_X, SCREEN_SIZE_Y = 640, 640
 TILE_SIZE = 64
 
 # load images
-bot_image = double_size(cv2.imread("tiles/dragon.png"))
-player_image = double_size(cv2.imread("tiles/deep_elf_high_priest.png"))
+bot_image = double_size(cv2.imread("yellow-boba.png"))
+bot_image = cv2.rotate(bot_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+bot_image = cv2.rotate(bot_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+player_image = double_size(cv2.imread("green-booba.png"))
+player_image = cv2.rotate(player_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+player_image = cv2.rotate(player_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 wall_image = double_size(cv2.imread("tiles/wall.png"))
-bullet_image = double_size(cv2.imread("tiles/ring.png"))
+bullet_image = double_size(cv2.imread("Bullet.png"))
 
 background = np.zeros((SCREEN_SIZE_Y, SCREEN_SIZE_X, 3), np.uint8)
 # create black background image with BGR color channels
