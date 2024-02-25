@@ -439,16 +439,26 @@ def on_press(key):
             print("Exiting the game")
             Player.exit_pressed = True
             return False
+        if key == kb.Key.enter:
+            pass
 
 
 def on_release(key):
-    if key == kb.Key.esc:
-        # Stop listener
-        Player.exit_pressed = True
-        return False
-    if key.char == 'q' or key.char == 'й':
-        Player.exit_pressed = True
-        return False
+    try:
+        if key == kb.Key.esc:
+            # Stop listener
+            Player.exit_pressed = True
+            return False
+        if key.char == 'q' or key.char == 'й':
+            Player.exit_pressed = True
+            return False
+    except AttributeError:
+        if key == kb.Key.esc:
+            print("Exiting the game")
+            Player.exit_pressed = True
+            return False
+        if key == kb.Key.enter:
+            pass
 
 # function of starting a game, starting threads
 def start(player, bot, bullet, bot_bullet, bullet_moving, bot_bullet_moving):
@@ -476,27 +486,10 @@ def start(player, bot, bullet, bot_bullet, bullet_moving, bot_bullet_moving):
 
     finally:
         cleanup()
+        all_to_start()
+        print("All threads terminated.")
 
-    print("All threads terminated.")
 
-
-
-def start_2():
-    thread_screen = threading.Thread(target=screen_renew, args=(background, player, bot), daemon=True)
-    thread_bot = threading.Thread(target=bot.move_towards_target, daemon=True)
-    thread_bot.start()
-    thread_screen.start()
-    with kb.Listener(
-            on_press=on_press,
-            on_release=on_release) as listener:
-        listener.join()
-    thread_screen.join()
-    thread_bot.join()
-    if Player.exit_pressed:
-        kb.Listener = kb.Listener.stop
-    print("All threads terminated")
-    print(threading.enumerate())
-    cv2.destroyAllWindows()
 
 # function of creating walls on the level
 def wall_show():
@@ -504,6 +497,33 @@ def wall_show():
     print("wall_num", wall_num)
     for wall in wall_num:
         wall_create = Wall(wall[0], wall[1], wall_image)
+
+def all_to_start():
+    global background, walls, player, bot, bullet, bot_bullet, exit_pressed, bullet_moving, bot_bullet_moving, direction
+    background = np.zeros((SCREEN_SIZE_Y, SCREEN_SIZE_X, 3), np.uint8)
+    # create black background image with BGR color channels
+    xpos, ypos = 4, 4
+    direction = 0
+    # starting position and direction of the player in dungeon
+
+    walls = []  # ARRAY OF TYPE Wall
+
+    # create a player object
+    player = Player(xpos, ypos, 0, player_image)
+    # create a bot object
+    bot = Bot(1, 1, 0, bot_image)
+    Bot.hp = 3
+    # create a walls object
+    wall_show()
+
+    # creating bullets
+    bullet = Bullet(0, 0, bullet_image, 0, "player")
+    bot_bullet = Bullet(0, 0, bullet_image, 0, "bot")
+
+    exit_pressed = False
+    bullet_moving = False
+    bot_bullet_moving = False
+    print("All threads terminated again.")
 
 # screen size and tile size definition
 SCREEN_SIZE_X, SCREEN_SIZE_Y = 640, 640
@@ -545,4 +565,6 @@ exit_pressed = False
 bullet_moving = False
 bot_bullet_moving = False
 print(Player.exit_pressed)
+print("All threads terminated again.")
+
 #print("WALLS - ", walls)
