@@ -25,6 +25,10 @@ bot_image_lock = threading.Lock()
 
 class MyException(Exception): pass
 
+class MyChar:
+    def __init__(self, char):
+        self.char = char
+        self.__eq__ = True
 
 class Player:
     exit_pressed = False
@@ -447,8 +451,7 @@ def on_release(key):
         return False
 
 # function of starting a game, starting threads
-def start():
-    global player, bot, bullet, bot_bullet, bullet_moving, bot_bullet_moving
+def start(player, bot, bullet, bot_bullet, bullet_moving, bot_bullet_moving):
 
     def cleanup():
         print("Exiting the game...")

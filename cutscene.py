@@ -43,10 +43,10 @@ def cutscene(text: str, songfile: str, imagefile: str, wait: int = 3):
         i += 1
         key = chr(cv2.waitKey(1) & 0xFF)
         if key in string.printable:
-            break
+            cv2.destroyAllWindows()
+            mixer.music.stop()
+            return key
         # time.sleep (wait)
-    cv2.destroyAllWindows()
-    mixer.music.stop()
 
 
 if __name__ == "__main__":
