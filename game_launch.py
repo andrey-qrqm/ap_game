@@ -1,4 +1,4 @@
-import game_threads
+#import game_threads
 import cutscene
 
 cutscene.cutscene(
@@ -6,13 +6,10 @@ cutscene.cutscene(
         songfile="song_1.wav",
         imagefile="title.png",
     )
-game_threads.start(game_threads.player,
-                   game_threads.bot,
-                   game_threads.bullet,
-                   game_threads.bot_bullet,
-                   game_threads.bullet_moving,
-                   game_threads.bot_bullet_moving)
-game_threads.keyboard.press('q')
+
+game = open('./game_threads.py')
+exec(game.read())
+game.close()
 #game_threads.cv2.destroyAllWindows()
 cutscene.cutscene(
     text="Well, you've killed my bot. Wanna restart? Press 'e' to restart or 'q' to exit",

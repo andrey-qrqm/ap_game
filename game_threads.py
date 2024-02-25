@@ -564,6 +564,8 @@ bot_bullet = Bullet(0, 0, bullet_image, 0, "bot")
 exit_pressed = False
 bullet_moving = False
 bot_bullet_moving = False
+
+start(player, bot, bullet, bot_bullet, bullet_moving, bot_bullet_moving)
 print(Player.exit_pressed)
 print("All threads terminated again.")
 
