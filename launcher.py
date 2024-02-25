@@ -3,5 +3,5 @@ while key == 'e':
     game = open('./game_launch.py')
     exec(game.read())
     game.close()
-    key = input("e or q")
+    key = input("e or q? \n")
     print(key)
