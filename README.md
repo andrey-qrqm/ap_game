@@ -8,6 +8,8 @@ enemy (yellow) tank as fast as you can. The enemy heath bar equals 3, so for the
 Bot will as well try to frighten you with their own shots, but for today your tank is too strong to get some affects from this bullets. The terrain and walls will generate automatically in the beginning of
 every game. 
 
+To run the game you will need to download files from this project into one folder, folder visual should be placed inside the initial folder.
+
 To start the game you will need to download requirements.txt with libraries. 
 For example you can do it with next line in terminal:
 
