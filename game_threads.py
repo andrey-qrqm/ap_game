@@ -178,7 +178,6 @@ class Bot(Player):
                 y_mem = self.y
                 variety = random.randint(0, 10)
                 if variety <= 3:
-                    time.sleep(1)
                     bot.bot_shoot()
                 if Player.exit_pressed:
                     break
