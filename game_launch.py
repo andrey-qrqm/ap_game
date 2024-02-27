@@ -2,7 +2,7 @@
 import cutscene
 
 cutscene.cutscene(
-        text="Well, you've opened my game. Good Luck and try to win it",
+        text="Welcome! Or you are not new here? I can't remember all of you... Good luck defeating my bot!",
         songfile="./visual/song_1.wav",
         imagefile="./visual/title.png",
     )
@@ -13,7 +13,7 @@ exec(game.read())
 game.close()
 #game_threads.cv2.destroyAllWindows()
 cutscene.cutscene(
-    text="Well, you've killed my bot. Wanna restart? Press 'e' to restart or 'q' to exit",
+    text="Well, you've killed my bot or decided to quit my game. Wanna restart? Press 'e' to restart or 'q' to exit",
     songfile="./visual/song_1.wav",
     imagefile="./visual/title.png",
 )

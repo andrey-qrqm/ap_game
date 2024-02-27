@@ -23,7 +23,7 @@ def cutscene(text: str, songfile: str, imagefile: str, wait: int = 3):
         text[:47],
         org=(15, 490),
         fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-        fontScale=1,
+        fontScale=0.75,
         color=(255, 255, 255),
         thickness=2,
     )
@@ -32,7 +32,7 @@ def cutscene(text: str, songfile: str, imagefile: str, wait: int = 3):
         text[47:],
         org=(15, 530),
         fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-        fontScale=1,
+        fontScale=0.75,
         color=(255, 255, 255),
         thickness=2,
     )
