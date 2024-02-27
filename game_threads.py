@@ -1,13 +1,3 @@
-"""
-Proof-of-concept: move around on a 2D grid
-
-Install dependencies:
-
-    pip install opencv-python
-"""
-
-
-### LIBRARY ARCADE
 import random
 import threading
 import keyboard
