@@ -10,7 +10,7 @@ def test_of_player():
     try:
         player = game_threads.Player(4, 5, 0, game_threads.player_image)
         if player:
-            print("---------------------------------Test Player complete--------------------------------------------------")
+            print("---------------------------------Test Player complete----------------------------------------------")
             return 200
         else:
             print("------------------------------------Test Player Failed---------------------------------------------")
