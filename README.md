@@ -10,9 +10,11 @@ every game.
 
 To start the game you will need to download requirements.txt with libraries. 
 For example you can do it with next line in terminal:
+
 py -m pip install --no-cache-dir --no-warn-script-location --user -r requirements.txt 
 
 The next step is to run launcher.py and you are free to play!
+
 py .\launcher.py
 
 *** py can be modyfied to python3 or python based on your system
