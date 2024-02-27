@@ -28,7 +28,7 @@ Q - quit the game
 
 Have fun!
 
-game_tests.py is a file to check basic game consepts and make to make sure that installation was correct. You can run game_tests.py, and pressing "q" to end the window. After in the terminal you will see test results.
+game_tests.py is a file to check basic game concepts and make to make sure that installation was correct. You can run game_tests.py, and pressing "q" to end the window. After in the terminal you will see test results.
 
 In my game code I have implemented pieces of code from my university professor K. Rother game. You can find his approach here:  https://github.com/krother/ams_dungeon_explorer 
 Some visual and sounds were taken from https://opengameart.org, others (tanks and bullet models) were created by my friend Fedor.
