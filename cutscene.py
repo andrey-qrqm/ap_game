@@ -11,6 +11,7 @@ def cutscene(text: str, songfile: str, imagefile: str, wait: int = 3):
     mixer.init()
     mixer.music.load(songfile)
     mixer.music.play(loops=-1)
+    mixer.music.set_volume(0.5)
 
     # show the image
     img = cv2.imread(imagefile)  # sometimes returns None
@@ -52,13 +53,13 @@ def cutscene(text: str, songfile: str, imagefile: str, wait: int = 3):
 if __name__ == "__main__":
     cutscene(
         text="Congratulations Warrior, you just completed the level. Now the real challenge starts.",
-        songfile="song_1.wav",
-        imagefile="title.png",
+        songfile="./visual/song_1.wav",
+        imagefile="./visual/title.png",
     )
 
     cutscene(
         text="Welcome To The New Level ",
         wait=5,
-        songfile="song_1.wav",
-        imagefile="title.png",
+        songfile="./visual/song_1.wav",
+        imagefile="./visual/title.png",
     )

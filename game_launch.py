@@ -3,8 +3,8 @@ import cutscene
 
 cutscene.cutscene(
         text="Well, you've opened my game. Good Luck and try to win it",
-        songfile="song_1.wav",
-        imagefile="title.png",
+        songfile="./visual/song_1.wav",
+        imagefile="./visual/title.png",
     )
 
 game = open('./game_threads.py')
@@ -14,6 +14,6 @@ game.close()
 #game_threads.cv2.destroyAllWindows()
 cutscene.cutscene(
     text="Well, you've killed my bot. Wanna restart? Press 'e' to restart or 'q' to exit",
-    songfile="song_1.wav",
-    imagefile="title.png",
+    songfile="./visual/song_1.wav",
+    imagefile="./visual/title.png",
 )

@@ -530,14 +530,14 @@ SCREEN_SIZE_X, SCREEN_SIZE_Y = 640, 640
 TILE_SIZE = 64
 
 # load images
-bot_image = double_size(cv2.imread("yellow-boba.png"))
+bot_image = double_size(cv2.imread("./visual/yellow-tank.png"))
 bot_image = cv2.rotate(bot_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 bot_image = cv2.rotate(bot_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-player_image = double_size(cv2.imread("green-booba.png"))
+player_image = double_size(cv2.imread("./visual/green-tank.png"))
 player_image = cv2.rotate(player_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 player_image = cv2.rotate(player_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-wall_image = double_size(cv2.imread("tiles/wall.png"))
-bullet_image = double_size(cv2.imread("Bullet.png"))
+wall_image = double_size(cv2.imread("./visual/wall.png"))
+bullet_image = double_size(cv2.imread("visual/Bullet.png"))
 
 background = np.zeros((SCREEN_SIZE_Y, SCREEN_SIZE_X, 3), np.uint8)
 # create black background image with BGR color channels
