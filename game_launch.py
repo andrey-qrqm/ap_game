@@ -8,6 +8,7 @@ cutscene.cutscene(
     )
 
 game = open('./game_threads.py')
+
 exec(game.read())
 game.close()
 #game_threads.cv2.destroyAllWindows()

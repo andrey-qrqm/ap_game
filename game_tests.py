@@ -1,9 +1,14 @@
+import keyboard
+
+
 import game_threads
+game_threads.Player.exit_pressed = True
+keyboard.press('q')
 
 
 def test_of_player():
     try:
-        player = game_threads.Player(4, 5, 0, game_threads.player_image, False)
+        player = game_threads.Player(4, 5, 0, game_threads.player_image)
         if player:
             print("---------------------------------Test Player complete--------------------------------------------------")
             return 200
@@ -17,7 +22,7 @@ def test_of_player():
 
 
 def test_of_walls():
-    player = game_threads.Player(4, 5, 0, game_threads.player_image, False)
+    player = game_threads.Player(4, 5, 0, game_threads.player_image)
     walls = []
     for x in range(0, 9):
         wall = game_threads.Wall(x, x, game_threads.wall_image)
@@ -38,8 +43,8 @@ def test_of_walls():
 
 
 def test_bullet():
-    bot = game_threads.Bot(1, 1, 180, game_threads.bot_image, False)
-    player = game_threads.Player(1, 5, 0, game_threads.player_image, False)
+    bot = game_threads.Bot(1, 1, 180, game_threads.bot_image)
+    player = game_threads.Player(1, 5, 0, game_threads.player_image)
     bot.bot_shoot()
     player.shoot()
     if game_threads.bot_bullet.x != 0 and game_threads.bullet.x != 0:
@@ -49,9 +54,6 @@ def test_bullet():
         print("----------------------------------Test bullet failed---------------------------------------------------")
         return 0
 
-
-def test_collide():
-    pass
 
 test_bullet()
 test_of_walls()
